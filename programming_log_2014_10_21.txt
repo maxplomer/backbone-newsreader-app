@@ -1,0 +1,245 @@
+THIS IS AN IDIOTS GUIDE TO APP ACADEMY w7d2
+
+directions on news-reader demo repo
+
+$ bundle install
+$ rake db:migrate
+$ rake db:seed
+
+We are now doing this step: (2) Examine the schema, the models, the routes, and the controllers.
+
+
+
+//////schema//////
+
+   - entries: strings(guid, link, title) 
+
+datetime(published_at) 
+
+integer(feed_id)  ///every every is in a certain type of feed=??????
+
+
+
+   - feeds: is a link/url and a title
+
+
+explanation for: add_index "feeds", ["url"], name: "index_feeds_on_url", unique: true
+
+is for internal optimization, faster lookup to lookup feed by url
+
+add index creating new table where the column you are indexing by becomes the id
+
+thats why it can enforce uniqueness
+
+
+
+
+//////the models///////
+
+
+######entry.rb
+
+     belongs to a feed, we knew that because has a feed_id
+
+     we have two class methods 
+
+
+def self.create_from_json!(entryData, feed)
+
+    - this is basically an extra create method that creates only from json data
+
+    - entryData will be the JSON
+
+
+
+def self.scrub_encoding(data)
+
+   - making sure everything is a utf-8 encoded string
+
+
+#####feed.rb
+
+
+simple-rss is found in the feed model - A simple, flexible, extensible, and liberal RSS and Atom reader for Ruby.
+
+example of using SimpleRSS:
+require 'simple-rss'
+require 'open-uri'
+
+rss = SimpleRSS.parse open('http://slashdot.org/index.rdf')
+
+—returns a SimpleRSS object
+
+
+////////routes///////////
+
+
+  - everything in folder api 
+
+  - entries nested in feeds, entries only have index action
+
+  - feeds/:id/entries/ that will be all the entries that belong to a 
+
+  - root to: "static_pages#index"
+
+
+
+///////controllers/////////
+
+
+empty index action in StaticPagesController
+
+  why called StaticPagesController?  conventional name for setting up one main page, only for use with backbone
+
+  - implicitly calling render :index
+
+  - in demo project we had
+
+class SiteController < ApplicationController
+  def root
+  end
+end
+
+
+
+We are now doing this step: (4) Using the browser, make sure that everything is working by visiting the index and show urls for the feeds resource.
+
+
+   - We saw “Hello World”
+
+   - app/views/static_pages/index.html.erb  file with that <h1> in
+
+
+
+
+///////reviewing model feed.rb////////////
+
+self.touch  // updates updated_at column
+
+guid ==== ????????
+
+
+where is reload getting url variable????
+   reload is an instance method, we will assume url is pulled from the instance variable
+
+
+
+
+
+
+
+!!!!!!!general note on feed model: on a news website (note this website), news sites we are tracking ill have rss feed 
+
+  recheck that url and add new entries as they appear
+
+
+
+
+
+
+step (5) Using the rails console use the two custom methods in the Feed model to create and reload an RSS feed. Make sure you undestand how these methods work.
+
+methods are:
+  def self.find_or_create_by_url(url)
+
+
+  def reload
+
+Example of creating and reloading Feed object in the console:
+
+Feed.find_or_create_by_url('http://rss.nytimes.com/services/xml/rss/nyt/Economy.xml')
+times = Feed.all[-1]
+times.reload 
+
+
+
+
+——rails time helpers, don’t have to subtract
+
+30.seconds.ago
+
+  they convert 1.week.ago to time object
+
+
+
+
+///we are testing latest_entries
+
+
+
+feed = Feed.find_or_create_by_url('http://lorem-rss.herokuapp.com/feed?unit=second&interval=10')
+feed.latest_entries
+
+
+///////////Let's update the show method for our FeedsController.//////////
+
+def show
+  render :json => Feed.find(params[:id]), :include => :latest_entries
+end
+
+//////Phase I: JS Client with Backbone//////
+
+#Generating basic js/backbone functionality
+$ rails g backbone:install --javascript
+
+#Generating Post model functionality  <—DO WE NEED?
+rails generate backbone:scaffold Feed --javascript
+
+create  app/assets/javascripts/models/feed.js
+      create  app/assets/javascripts/collections/feeds.js
+      create  app/assets/javascripts/routers/feeds_router.js
+      create  app/assets/javascripts/views/feeds
+      create  app/assets/javascripts/views/feeds/feeds_index.js
+      create  app/assets/templates/feeds
+      create  app/assets/templates/feeds/index.jst.ejs
+
+
+(4) Refresh the page and in the javascript console on your web browser, create a new instance of the collection and fetch it. Confirm that it worked by looking at the models inside the collection.
+
+
+var test = new NewsReader.Collections.Feeds;
+
+test.fetch();
+
+
+
+*********
+getting error: “/Users/appacademy/Desktop/news-reader-master/skeleton/app/assets/templates/feeds/index.jst.ejs isn't in paths”
+
+to fix this error we are trying to add the following line to our config/application.rb file
+
+    config.assets.paths << "app/assets/templates"
+
+I think that Rails has a path that it checks for dependent files and that backbone templates are not included in this path, so when a file that references such a template is executed, it generates an error
+
+
+////////Feed Routes and Index View////////
+
+
+
+///////Entries////////////
+
+!!!!!!We are doing this STEP: At this stage we should have both Feeds and Entries working. In the Javascript console in your browser, create a new instance of Feeds and fetch. Verify that all the feeds are there. Now for each Feed in the collection, call fetch the feed. This should successfully fetch all the entry data from the rails server.
+
+
+  - in the chrome console we did the following commands:
+
+f = new NewsReader.Collections.Feeds()
+
+f.fetch()
+
+f = f.first()
+
+f.fetch()
+
+f.entries()
+
+
+
+
+
+////helpful links////
+
+http://backbonejs.org/#Model-urlRoot
+
+http://bennolan.com/2011/06/10/backbone-get-or-fetch.html
